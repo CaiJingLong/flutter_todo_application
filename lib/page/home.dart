@@ -3,6 +3,7 @@ import 'package:scoped_model/scoped_model.dart';
 import 'package:todo_app/page/add_page.dart';
 import 'package:todo_app/entity/todo_entity.dart';
 import 'package:todo_app/model/todo_model.dart';
+import 'package:todo_app/widget/confilm_dialog.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -36,16 +37,20 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildItem(BuildContext context, int index, TodoEntity data) {
-    return InkWell(
-      onLongPress: () => _delete(data),
-      child: ListTile(
-        title: Text(
-          data.title,
-        ),
-        subtitle: Text(
-          data.remark,
+    return Dismissible(
+      child: InkWell(
+        onLongPress: () => _delete(data),
+        child: ListTile(
+          title: Text(
+            data.title,
+          ),
+          subtitle: Text(
+            data.remark,
+          ),
         ),
       ),
+      key: ValueKey(data),
+      onDismissed: (dis) => realDelete(data),
     );
   }
 
@@ -58,6 +63,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   _delete(TodoEntity data) {
-    TodoModel.of(context).deleteData(data);
+    showDialog(
+      context: context,
+      builder: (ctx) => ConfirmDialog(
+            onSure: () => realDelete(data),
+            title: '确定要删除"${data.title}"吗？',
+          ),
+    );
   }
+
+  realDelete(TodoEntity data) => TodoModel.of(context).deleteData(data);
 }

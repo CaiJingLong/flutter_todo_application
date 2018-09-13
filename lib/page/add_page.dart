@@ -43,10 +43,10 @@ class _AddTodoPageState extends State<AddTodoPage> {
                 ),
                 validator: (value) {
                   print("value = $value");
-                  if (value == "1") {
-                    return null;
+                  if (value == null || value.isEmpty || value.trim().isEmpty) {
+                    return "标题不能为空";
                   }
-                  return "标题不能为空";
+                  return null;
                 },
                 controller: title,
               ),
@@ -74,8 +74,8 @@ class _AddTodoPageState extends State<AddTodoPage> {
 
   void _submit() {
     var todoEntity = TodoEntity(
-      title: title.text,
-      remark: remark.text,
+      title: title.text.trim(),
+      remark: remark.text?.trim() ?? "",
       dateTime: DateTime.now(),
     );
     TodoModel.of(context).addData(todoEntity);
