@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
-import 'package:todo_app/add_page.dart';
-import 'package:todo_app/todo_entity.dart';
-import 'package:todo_app/todo_model.dart';
+import 'package:todo_app/page/add_page.dart';
+import 'package:todo_app/entity/todo_entity.dart';
+import 'package:todo_app/model/todo_model.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -23,7 +23,8 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: Container(
-        child: ScopedModelDescendant<TodoModel>(builder: (BuildContext context, Widget child, TodoModel model) {
+        child: ScopedModelDescendant<TodoModel>(
+            builder: (BuildContext context, Widget child, TodoModel model) {
           var list = model.list;
           return ListView.builder(
             itemBuilder: (ctx, i) => _buildItem(ctx, i, list[i]),
@@ -35,12 +36,28 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildItem(BuildContext context, int index, TodoEntity data) {
-    return ListTile(
-      title: Text("todo item $index"),
+    return InkWell(
+      onLongPress: () => _delete(data),
+      child: ListTile(
+        title: Text(
+          data.title,
+        ),
+        subtitle: Text(
+          data.remark,
+        ),
+      ),
     );
   }
 
   void _add() {
-    Navigator.of(context).push(MaterialPageRoute(builder: (ctx) => AddTodoPage()));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => AddTodoPage(),
+      ),
+    );
+  }
+
+  _delete(TodoEntity data) {
+    TodoModel.of(context).deleteData(data);
   }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:todo_app/entity/todo_entity.dart';
+import 'package:todo_app/model/todo_model.dart';
 
 class AddTodoPage extends StatefulWidget {
   @override
@@ -7,16 +9,19 @@ class AddTodoPage extends StatefulWidget {
 
 class _AddTodoPageState extends State<AddTodoPage> {
   TextEditingController title;
+  TextEditingController remark;
+
   @override
   void initState() {
     super.initState();
     title = TextEditingController();
+    remark = TextEditingController();
   }
 
   @override
   void dispose() {
     title.dispose();
-
+    remark.dispose();
     super.dispose();
   }
 
@@ -53,12 +58,27 @@ class _AddTodoPageState extends State<AddTodoPage> {
                 decoration: InputDecoration(
                   hintText: "备注信息",
                 ),
+                controller: remark,
               ),
             ),
           ],
         ),
         autovalidate: true,
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _submit,
+        child: Icon(Icons.done),
+      ),
     );
+  }
+
+  void _submit() {
+    var todoEntity = TodoEntity(
+      title: title.text,
+      remark: remark.text,
+      dateTime: DateTime.now(),
+    );
+    TodoModel.of(context).addData(todoEntity);
+    Navigator.pop(context);
   }
 }

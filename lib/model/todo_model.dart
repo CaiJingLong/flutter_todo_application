@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
-import 'package:todo_app/todo_entity.dart';
+import 'package:todo_app/entity/todo_entity.dart';
 
 class TodoModel extends Model {
   static TodoModel of(BuildContext context) => ScopedModel.of<TodoModel>(context);
