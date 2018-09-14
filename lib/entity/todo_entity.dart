@@ -5,6 +5,7 @@ enum Level {
 }
 
 class TodoEntity {
+  int id;
   String title;
   String remark;
   DateTime dateTime;
