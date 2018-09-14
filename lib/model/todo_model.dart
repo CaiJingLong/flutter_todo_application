@@ -11,12 +11,13 @@ class TodoModel extends Model {
       ScopedModel.of<TodoModel>(context);
 
   List<TodoEntity> _list = [];
-  var _dataHelper;
+  _SaveDateHelper _dataHelper;
 
   TodoModel() {
-    _SaveDateHelper.getInstance().then((helper) {
+    _SaveDateHelper.getInstance().then((helper) async {
       _dataHelper = helper;
-      _list = _dataHelper.loadSavedData();
+      _list = await _dataHelper.loadSavedData();
+      sort();
       notifyListeners();
     });
   }
@@ -33,18 +34,32 @@ class TodoModel extends Model {
     return result;
   }
 
-  addData(TodoEntity entity, {int index = 0}) {
+  sort() {
+    _list.sort((v1, v2) {
+      var i = v1.level.index.compareTo(v2.level.index);
+      if (i != 0) {
+        return i;
+      }
+      return v2.dateTime.compareTo(v1.dateTime);
+    });
+  }
+
+  addData(TodoEntity entity, {int index = 0}) async {
     _list.insert(index, entity);
+    sort();
+    await _dataHelper.saveData(entity);
     notifyListeners();
   }
 
-  deleteData(TodoEntity entity) {
+  deleteData(TodoEntity entity) async {
     _list.remove(entity);
+    await _dataHelper.deleteData(entity);
     notifyListeners();
   }
 
-  deleteAtIndex(int index) {
-    _list.removeAt(index);
+  deleteAtIndex(int index) async {
+    var entity = _list.removeAt(index);
+    await _dataHelper.deleteData(entity);
     notifyListeners();
   }
 
@@ -81,14 +96,15 @@ class _SaveDateHelper {
         "CREATE TABLE todo (_id INTEGER PRIMARY KEY, title TEXT, remark TEXT, datetime INTEGER ,level INTEGER)");
   }
 
-  void saveData(TodoEntity entity) async {
-    var list =
-        await db.rawQuery("SELECT * from todo where _id = ?", [entity.id]);
-    if (list == null || list.isEmpty) {
-      insertData(entity);
-    } else {
-      // update
+  Future saveData(TodoEntity entity) async {
+    var data = await queryData(entity);
 
+    if (data == null) {
+      var id = await insertData(entity);
+      print("insert id = $id");
+      entity.id = id;
+    } else {
+      await updateData(entity);
     }
   }
 
@@ -96,39 +112,79 @@ class _SaveDateHelper {
     if (entity.id != null) {
       return entity;
     }
-    List<Map<String, dynamic>> result;
-    result = await db.query("todo", where: "_id = ?", whereArgs: [entity.id]);
+    List<Map<String, dynamic>> result =
+        await db.query("todo", where: "_id = ?", whereArgs: [entity.id]);
 
+    if (result == null || result.isEmpty) {
+      return null;
+    }
+    return result.map((item) {
+      return convertMapToEntity(item);
+    }).elementAt(0);
   }
 
-  void insertData(TodoEntity entity) async {
-    await db.insert("todo", {
-      "_id": entity.id,
-      "title": entity.title,
-      "remark": entity.remark,
-      "datetime": entity.dateTime.millisecondsSinceEpoch,
-      "level": Level.values.indexOf(entity.level),
-    });
+  Future<int> insertData(TodoEntity entity) async {
+    await db.insert("todo", convertEntityToMap(entity));
+    var list = await db.query(
+      "todo",
+      columns: ["_id"],
+      where: "datetime = ?",
+      whereArgs: [entity.dateTime.millisecondsSinceEpoch],
+    );
+
+    return list[0]["_id"];
+  }
+
+  Future deleteData(TodoEntity entity) async {
+    await db.delete(
+      "todo",
+      where: "_id = ?",
+      whereArgs: [entity.id],
+    );
+  }
+
+  Future updateData(TodoEntity entity) async {
+    await db.update(
+      "todo",
+      convertEntityToMap(entity),
+      where: "_id = ?",
+      whereArgs: [entity.id],
+    );
   }
 
   Future<List<TodoEntity>> loadSavedData() async {
     List<TodoEntity> list = [];
     var queryResult = await db.rawQuery("SELECT * from todo");
     for (var map in queryResult) {
-//      var id = map["_id"];
-      var title = map['title'];
-      var remark = map['remark'];
-      var dateTime = map['datetime'];
-      var level = map['level'];
-
-      var entity = TodoEntity();
-      entity.title = title;
-      entity.remark = remark;
-      entity.dateTime = DateTime.fromMillisecondsSinceEpoch(dateTime);
-      entity.level = Level.values[level];
-
+      var entity = convertMapToEntity(map);
       list.add(entity);
     }
     return list;
+  }
+
+  TodoEntity convertMapToEntity(Map<String, dynamic> map) {
+    var todoEntity = TodoEntity(
+        title: map["title"],
+        remark: map['remark'],
+        level: Level.values[map["level"]],
+        dateTime: DateTime.fromMillisecondsSinceEpoch(map["datetime"]))
+      ..id = map["_id"];
+    return todoEntity;
+  }
+
+  Map<String, dynamic> convertEntityToMap(
+    TodoEntity entity, {
+    bool convertId = false,
+  }) {
+    var params = {
+      "title": entity.title,
+      "remark": entity.remark,
+      "datetime": entity.dateTime.millisecondsSinceEpoch,
+      "level": Level.values.indexOf(entity.level),
+    };
+    if (convertId == true) {
+      params["_id"] = entity.id;
+    }
+    return params;
   }
 }
