@@ -11,6 +11,10 @@ class _AddTodoPageState extends State<AddTodoPage> {
   TextEditingController title;
   TextEditingController remark;
 
+  TodoEntity entity = TodoEntity();
+
+  Level currentLevel = Level.normal;
+
   @override
   void initState() {
     super.initState();
@@ -27,12 +31,12 @@ class _AddTodoPageState extends State<AddTodoPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('添加待办事项'),
-      ),
-      body: Form(
-        child: ListView(
+    return Form(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('添加待办事项'),
+        ),
+        body: ListView(
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -61,22 +65,65 @@ class _AddTodoPageState extends State<AddTodoPage> {
                 controller: remark,
               ),
             ),
+            _buildRadios(),
           ],
         ),
-        autovalidate: true,
+        floatingActionButton: Builder(
+          builder: (BuildContext context) => FloatingActionButton(
+                onPressed: () => _submit(context),
+                child: Icon(Icons.done),
+              ),
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _submit,
-        child: Icon(Icons.done),
+      autovalidate: true,
+    );
+  }
+
+  _buildRadios() {
+    return Container(
+      height: 55.0,
+      child: Row(
+        children: <Widget>[
+          _buildRadio(Level.normal),
+          _buildRadio(Level.low),
+          _buildRadio(Level.high),
+        ],
       ),
     );
   }
 
-  void _submit() {
+  _buildRadio(Level level) {
+    String text = "正常";
+    if (level == Level.high) {
+      text = "高";
+    } else if (level == Level.low) {
+      text = "低";
+    }
+    return Expanded(
+      child: FormField<Level>(
+        builder: (state) => RadioListTile<Level>(
+              groupValue: this.currentLevel,
+              onChanged: (Level value) {
+                this.currentLevel = value;
+                setState(() {});
+              },
+              value: level,
+              title: Text(text),
+            ),
+      ),
+    );
+  }
+
+  void _submit(BuildContext context) {
+    if (!Form.of(context).validate()) {
+      return;
+    }
+
     var todoEntity = TodoEntity(
       title: title.text.trim(),
       remark: remark.text?.trim() ?? "",
       dateTime: DateTime.now(),
+      level: this.currentLevel,
     );
     TodoModel.of(context).addData(todoEntity);
     Navigator.pop(context);

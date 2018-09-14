@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
-import 'package:todo_app/page/add_page.dart';
 import 'package:todo_app/entity/todo_entity.dart';
 import 'package:todo_app/model/todo_model.dart';
+import 'package:todo_app/page/add_page.dart';
 import 'package:todo_app/widget/confilm_dialog.dart';
+import 'package:todo_app/widget/thing.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -24,12 +25,17 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: Container(
-        child: ScopedModelDescendant<TodoModel>(
-            builder: (BuildContext context, Widget child, TodoModel model) {
+        child: ScopedModelDescendant<TodoModel>(builder: (BuildContext context, Widget child, TodoModel model) {
           var list = model.list;
-          return ListView.builder(
+          return ListView.separated(
             itemBuilder: (ctx, i) => _buildItem(ctx, i, list[i]),
             itemCount: list.length,
+            separatorBuilder: (BuildContext context, int index) {
+              return Container(
+                height: 1.0,
+                color: Theme.of(context).dividerColor,
+              );
+            },
           );
         }),
       ),
@@ -40,13 +46,9 @@ class _HomePageState extends State<HomePage> {
     return Dismissible(
       child: InkWell(
         onLongPress: () => _delete(data),
-        child: ListTile(
-          title: Text(
-            data.title,
-          ),
-          subtitle: Text(
-            data.remark,
-          ),
+        child: ThingItem(
+          data: data,
+          index: index,
         ),
       ),
       key: ValueKey(data),

@@ -21,6 +21,8 @@ dependencies:
   cupertino_icons: ^0.1.2
 
   scoped_model: ^0.3.0
+  datetime_helper: ^0.0.2
+  oktoast: ^1.0.3
 
 dev_dependencies:
   flutter_test:
