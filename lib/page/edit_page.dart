@@ -2,24 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:todo_app/entity/todo_entity.dart';
 import 'package:todo_app/model/todo_model.dart';
 
-class AddTodoPage extends StatefulWidget {
+class EditPage extends StatefulWidget {
+  final TodoEntity data;
+
+  const EditPage({Key key, this.data}) : super(key: key);
+
   @override
-  _AddTodoPageState createState() => _AddTodoPageState();
+  _EditPageState createState() => _EditPageState();
 }
 
-class _AddTodoPageState extends State<AddTodoPage> {
+class _EditPageState extends State<EditPage> {
   TextEditingController title;
   TextEditingController remark;
-
-  TodoEntity entity = TodoEntity();
 
   Level currentLevel = Level.normal;
 
   @override
   void initState() {
     super.initState();
-    title = TextEditingController();
-    remark = TextEditingController();
+    var data = widget.data;
+    title = TextEditingController(text: data.title);
+    remark = TextEditingController(text: data.remark);
+    finish = widget.data.finish ?? false;
   }
 
   @override
@@ -66,6 +70,7 @@ class _AddTodoPageState extends State<AddTodoPage> {
               ),
             ),
             _buildRadios(),
+            _buildFinish(),
           ],
         ),
         floatingActionButton: Builder(
@@ -119,13 +124,29 @@ class _AddTodoPageState extends State<AddTodoPage> {
       return;
     }
 
-    var todoEntity = TodoEntity(
-      title: title.text.trim(),
-      remark: remark.text?.trim() ?? "",
-      dateTime: DateTime.now(),
-      level: this.currentLevel,
-    );
-    TodoModel.of(context).addData(todoEntity);
+    var data = widget.data;
+
+    data
+      ..title = title.text.trim()
+      ..remark = (remark.text?.trim() ?? "")
+      ..level = this.currentLevel
+      ..finish = this.finish;
+
+    TodoModel.of(context).updateData();
     Navigator.pop(context);
+  }
+
+  bool finish;
+
+  _buildFinish() {
+    return FormField<bool>(
+      builder: (FormFieldState field) {
+        return CheckboxListTile(
+          value: finish,
+          onChanged: (v) => setState(() => this.finish = v),
+          title: Text('已完成'),
+        );
+      },
+    );
   }
 }

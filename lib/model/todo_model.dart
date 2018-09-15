@@ -36,6 +36,13 @@ class TodoModel extends Model {
 
   sort() {
     _list.sort((v1, v2) {
+      if (v1.finish == v2.finish) {
+      } else if (v1.finish) {
+        return 1;
+      } else {
+        return -1;
+      }
+
       var i = v1.level.index.compareTo(v2.level.index);
       if (i != 0) {
         return i;
@@ -63,7 +70,11 @@ class TodoModel extends Model {
     notifyListeners();
   }
 
-  updateData() {
+  updateData() async {
+    for (var entity in _list) {
+      await _dataHelper.updateData(entity);
+    }
+    sort();
     notifyListeners();
   }
 
@@ -87,13 +98,20 @@ class _SaveDateHelper {
   _init() async {
     var databasesPath = await getDatabasesPath();
     String path = join(databasesPath, "todo.db");
-    db = await openDatabase(path, version: 1, onCreate: _onCreate);
+    db = await openDatabase(path,
+        version: 2, onCreate: _onCreate, onUpgrade: _onUpgrade);
   }
 
   FutureOr _onCreate(Database db, int version) async {
     // When creating the db, create the table
     await db.execute(
         "CREATE TABLE todo (_id INTEGER PRIMARY KEY, title TEXT, remark TEXT, datetime INTEGER ,level INTEGER)");
+  }
+
+  FutureOr _onUpgrade(Database db, int oldVersion, int newVersion) {
+    if (newVersion == 2) {
+      db.execute("ALTER TABLE todo ADD finish Boolean FALSE;");
+    }
   }
 
   Future saveData(TodoEntity entity) async {
@@ -163,11 +181,13 @@ class _SaveDateHelper {
   }
 
   TodoEntity convertMapToEntity(Map<String, dynamic> map) {
+    var f = map["finish"];
     var todoEntity = TodoEntity(
         title: map["title"],
         remark: map['remark'],
         level: Level.values[map["level"]],
-        dateTime: DateTime.fromMillisecondsSinceEpoch(map["datetime"]))
+        dateTime: DateTime.fromMillisecondsSinceEpoch(map["datetime"]),
+        finish: map["finish"] == 1)
       ..id = map["_id"];
     return todoEntity;
   }
@@ -181,6 +201,7 @@ class _SaveDateHelper {
       "remark": entity.remark,
       "datetime": entity.dateTime.millisecondsSinceEpoch,
       "level": Level.values.indexOf(entity.level),
+      "finish": entity.finish,
     };
     if (convertId == true) {
       params["_id"] = entity.id;
