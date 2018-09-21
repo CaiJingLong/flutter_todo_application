@@ -105,12 +105,12 @@ class _SaveDateHelper {
   FutureOr _onCreate(Database db, int version) async {
     // When creating the db, create the table
     await db.execute(
-        "CREATE TABLE todo (_id INTEGER PRIMARY KEY, title TEXT, remark TEXT, datetime INTEGER ,level INTEGER)");
+        "CREATE TABLE todo (_id INTEGER PRIMARY KEY, title TEXT, remark TEXT, datetime INTEGER ,level INTEGER ,finish Boolean FALSE)");
   }
 
   FutureOr _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (newVersion == 2) {
-      db.execute("ALTER TABLE todo ADD finish Boolean FALSE;");
+      await db.execute("ALTER TABLE todo ADD finish Boolean FALSE;");
     }
   }
 
