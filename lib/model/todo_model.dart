@@ -108,7 +108,7 @@ class _SaveDateHelper {
         "CREATE TABLE todo (_id INTEGER PRIMARY KEY, title TEXT, remark TEXT, datetime INTEGER ,level INTEGER)");
   }
 
-  FutureOr _onUpgrade(Database db, int oldVersion, int newVersion) {
+  FutureOr _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (newVersion == 2) {
       db.execute("ALTER TABLE todo ADD finish Boolean FALSE;");
     }
